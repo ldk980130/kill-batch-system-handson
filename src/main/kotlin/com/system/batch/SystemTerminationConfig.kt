@@ -1,5 +1,7 @@
 package com.system.batch
 
+import io.github.oshai.kotlinlogging.KLogger
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.batch.core.Job
 import org.springframework.batch.core.Step
 import org.springframework.batch.core.job.builder.JobBuilder
@@ -16,6 +18,8 @@ class SystemTerminationConfig(
     private val jobRepository: JobRepository,
     private val transactionManager: PlatformTransactionManager,
 ) {
+    private val log: KLogger = KotlinLogging.logger {}
+
     private val processesKilled = AtomicInteger(0)
 
     companion object {
@@ -35,7 +39,7 @@ class SystemTerminationConfig(
     fun enterWorldStep(): Step =
         StepBuilder("enterWorldStep", jobRepository)
             .tasklet({ contribution, chunkContext ->
-                println("System Termination Process is running...")
+                log.info { "System Termination Process is running..." }
                 RepeatStatus.FINISHED
             }, transactionManager)
             .build()
@@ -44,7 +48,7 @@ class SystemTerminationConfig(
     fun meetNPCStep(): Step =
         StepBuilder("meetNPCStep", jobRepository)
             .tasklet({ contribution, chunkContext ->
-                println("Meet NPC Process is running...")
+                log.info { "Meet NPC Process is running..." }
                 RepeatStatus.FINISHED
             }, transactionManager)
             .build()
@@ -54,7 +58,7 @@ class SystemTerminationConfig(
         StepBuilder("defeatProcessStep", jobRepository)
             .tasklet({ contribution, chunkContext ->
                 val termiated = processesKilled.incrementAndGet()
-                println("Defeat Process is running...(현재 $termiated / $TERMINATION_TARGET)")
+                log.info { "Defeat Process is running...(현재 $termiated / $TERMINATION_TARGET)" }
                 if (termiated < TERMINATION_TARGET) {
                     RepeatStatus.CONTINUABLE
                 } else {
@@ -67,7 +71,7 @@ class SystemTerminationConfig(
     fun completeQuestStep(): Step =
         StepBuilder("completeQuestStep", jobRepository)
             .tasklet({ contribution, chunkContext ->
-                println("Complete Quest Process, $TERMINATION_TARGET Process is completed.")
+                log.info { "Complete Quest Process, $TERMINATION_TARGET Process is completed." }
                 RepeatStatus.FINISHED
             }, transactionManager)
             .build()
