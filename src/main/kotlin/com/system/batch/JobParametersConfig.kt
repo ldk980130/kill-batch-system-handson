@@ -31,9 +31,9 @@ class JobParametersConfig(
             .build()
 
     @Bean
-    fun terminationStep(terminatorTaskletEnum: Tasklet): Step =
+    fun terminationStep(terminatorParamTasklet: Tasklet): Step =
         StepBuilder("terminationStep", jobRepository)
-            .tasklet(terminatorTaskletEnum, transactionManager)
+            .tasklet(terminatorParamTasklet, transactionManager)
             .build()
 
     @Bean
@@ -78,6 +78,33 @@ class JobParametersConfig(
             log.info { "💥 시스템 해킹 진행 중..." }
             log.info { "🏆 시스템 장악 완료!" }
             log.info { "💰 획득한 시스템 리소스: $totalReward 메가바이트" }
+            RepeatStatus.FINISHED
+        }
+
+    @Bean
+    fun terminatorParamTasklet(params: PojoParameters): Tasklet =
+        Tasklet { _: StepContribution?, _: ChunkContext? ->
+            log.info { "⚔️ 시스템 침투 작전 초기화!" }
+            log.info { "임무 코드네임: ${params.missionName}" }
+            log.info { "보안 레벨: ${params.securityLevel}" }
+            log.info { "작전 지휘관: ${params.operationCommander}" }
+
+            // 보안 레벨에 따른 침투 난이도 계산
+            val baseInfiltrationTime = 60 // 기본 침투 시간 (분)
+            val infiltrationMultiplier =
+                when (params.securityLevel) {
+                    1 -> 1
+                    2 -> 2
+                    3 -> 4
+                    4 -> 8
+                    else -> 1
+                }
+
+            val totalInfiltrationTime = baseInfiltrationTime * infiltrationMultiplier
+
+            log.info { "💥 시스템 해킹 난이도 분석 중..." }
+            log.info { "🕒 예상 침투 시간: ${totalInfiltrationTime}분" }
+            log.info { "🏆 시스템 장악 준비 완료!" }
             RepeatStatus.FINISHED
         }
 
