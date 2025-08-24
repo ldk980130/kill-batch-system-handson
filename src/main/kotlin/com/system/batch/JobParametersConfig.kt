@@ -83,7 +83,7 @@ class JobParametersConfig(
 
     @Bean
     fun terminatorParamTasklet(params: PojoParameters): Tasklet =
-        Tasklet { _: StepContribution?, _: ChunkContext? ->
+        Tasklet { _: StepContribution, _: ChunkContext ->
             log.info { "⚔️ 시스템 침투 작전 초기화!" }
             log.info { "임무 코드네임: ${params.missionName}" }
             log.info { "보안 레벨: ${params.securityLevel}" }
