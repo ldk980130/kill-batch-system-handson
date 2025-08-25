@@ -31,9 +31,9 @@ class JobParametersConfig(
             .build()
 
     @Bean
-    fun terminationStep(terminatorParamTasklet: Tasklet): Step =
+    fun terminationStep(terminatorTaskletJson: Tasklet): Step =
         StepBuilder("terminationStep", jobRepository)
-            .tasklet(terminatorParamTasklet, transactionManager)
+            .tasklet(terminatorTaskletJson, transactionManager)
             .build()
 
     @Bean
@@ -81,8 +81,10 @@ class JobParametersConfig(
             RepeatStatus.FINISHED
         }
 
+    enum class QuestDifficulty { EASY, NORMAL, HARD, EXTREME }
+
     @Bean
-    fun terminatorParamTasklet(params: PojoParameters): Tasklet =
+    fun terminatorTaskletPojo(params: PojoParameters): Tasklet =
         Tasklet { _: StepContribution, _: ChunkContext ->
             log.info { "⚔️ 시스템 침투 작전 초기화!" }
             log.info { "임무 코드네임: ${params.missionName}" }
@@ -108,5 +110,18 @@ class JobParametersConfig(
             RepeatStatus.FINISHED
         }
 
-    enum class QuestDifficulty { EASY, NORMAL, HARD, EXTREME }
+    @Bean
+    @StepScope
+    fun terminatorTaskletJson(
+        @Value("#{jobParameters['infiltrationTargets']}") infiltrationTargets: String,
+    ): Tasklet =
+        Tasklet { _: StepContribution, _: ChunkContext ->
+            val targets: Array<String?> =
+                infiltrationTargets.split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+            log.info { "⚡ 침투 작전 개시" }
+            log.info { "첫 번째 타겟: ${targets[0]} 침투 시작" }
+            log.info { "마지막 타겟: ${targets[1]} 에서 집결" }
+            log.info { "🎯 임무 전달 완료" }
+            RepeatStatus.FINISHED
+        }
 }
