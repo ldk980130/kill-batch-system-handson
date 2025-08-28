@@ -6,6 +6,7 @@ import org.springframework.batch.core.Job
 import org.springframework.batch.core.Step
 import org.springframework.batch.core.StepContribution
 import org.springframework.batch.core.configuration.annotation.StepScope
+import org.springframework.batch.core.job.DefaultJobParametersValidator
 import org.springframework.batch.core.job.builder.JobBuilder
 import org.springframework.batch.core.repository.JobRepository
 import org.springframework.batch.core.scope.context.ChunkContext
@@ -124,4 +125,29 @@ class JobParametersConfig(
             log.info { "🎯 임무 전달 완료" }
             RepeatStatus.FINISHED
         }
+
+    @Bean
+    fun jobParameterValidatorJob(
+        jobRepository: JobRepository,
+        terminationStep: Step,
+        validator: JobParametersValidatorEx,
+    ): Job =
+        JobBuilder("systemDestructionJob", jobRepository)
+            .validator(validator)
+            .start(terminationStep)
+            .build()
+
+    @Bean
+    fun defaultJobParameterValidatorJob(
+        jobRepository: JobRepository,
+        terminationStep: Step,
+    ): Job =
+        JobBuilder("systemDestructionJob", jobRepository)
+            .validator(
+                DefaultJobParametersValidator(
+                    arrayOf("destructionPower"),
+                    arrayOf("system.destruction.level"),
+                ),
+            ).start(terminationStep)
+            .build()
 }
