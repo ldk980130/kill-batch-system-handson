@@ -29,6 +29,7 @@ class SystemTerminationConfig(
     @Bean
     fun systemTerminationSimulationJob(): Job =
         JobBuilder("systemTerminationSimulationJob", jobRepository)
+            .listener(BigBrotherJobExecutionListener())
             .start(enterWorldStep())
             .next(meetNPCStep())
             .next(defeatProcessStep())
@@ -38,6 +39,7 @@ class SystemTerminationConfig(
     @Bean
     fun enterWorldStep(): Step =
         StepBuilder("enterWorldStep", jobRepository)
+            .listener(BigBrotherStepExecutionListener())
             .tasklet({ contribution, chunkContext ->
                 log.info { "System Termination Process is running..." }
                 RepeatStatus.FINISHED
