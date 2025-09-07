@@ -30,6 +30,7 @@ class SystemTerminationConfig(
     fun systemTerminationSimulationJob(): Job =
         JobBuilder("systemTerminationSimulationJob", jobRepository)
             .listener(BigBrotherJobExecutionListener())
+            .listener(ServerRoomInfiltrationListener())
             .start(enterWorldStep())
             .next(meetNPCStep())
             .next(defeatProcessStep())
@@ -58,6 +59,7 @@ class SystemTerminationConfig(
     @Bean
     fun defeatProcessStep(): Step =
         StepBuilder("defeatProcessStep", jobRepository)
+            .listener(ServerRackControlListener())
             .tasklet({ contribution, chunkContext ->
                 val termiated = processesKilled.incrementAndGet()
                 log.info { "Defeat Process is running...(현재 $termiated / $TERMINATION_TARGET)" }
