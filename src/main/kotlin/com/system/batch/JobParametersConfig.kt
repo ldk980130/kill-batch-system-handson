@@ -142,7 +142,7 @@ class JobParametersConfig(
         jobRepository: JobRepository,
         terminationStep: Step,
     ): Job =
-        JobBuilder("systemDestructionJob", jobRepository)
+        JobBuilder("defaultJobParameterValidatorJob", jobRepository)
             .validator(
                 DefaultJobParametersValidator(
                     arrayOf("destructionPower"),

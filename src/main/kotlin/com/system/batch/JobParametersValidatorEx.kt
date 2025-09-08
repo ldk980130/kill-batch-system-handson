@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component
 @Component
 class JobParametersValidatorEx : JobParametersValidator {
     override fun validate(parameters: JobParameters?) {
-        if (parameters == null) throw JobParametersInvalidException("파라미터가 NULL입니다")
+        requireNotNull(parameters) { "파라미터가 NULL입니다" }
 
         val destructionPower: Long =
             parameters.getLong("destructionPower")
