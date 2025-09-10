@@ -24,7 +24,7 @@ import kotlin.random.Random
 private val logger = KotlinLogging.logger {}
 
 @Configuration
-class AdvancedSystemInfiltrationConfig(
+class DynamicParameterExecutionContextExConfig(
     val infiltrationPlanListener: InfiltrationPlanListener,
 ) {
     @Bean
