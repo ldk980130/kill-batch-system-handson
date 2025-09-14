@@ -1,4 +1,4 @@
-package com.system.batch
+package com.system.batch.session2
 
 import org.springframework.batch.core.configuration.annotation.JobScope
 import org.springframework.batch.core.configuration.annotation.StepScope

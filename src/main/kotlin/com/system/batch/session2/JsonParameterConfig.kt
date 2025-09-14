@@ -1,4 +1,4 @@
-package com.system.batch
+package com.system.batch.session2
 
 import org.springframework.batch.core.converter.JobParametersConverter
 import org.springframework.batch.core.converter.JsonJobParametersConverter
