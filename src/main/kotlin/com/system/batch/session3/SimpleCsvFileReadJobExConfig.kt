@@ -66,6 +66,27 @@ class SimpleCsvFileReadJobExConfig(
             .build()
     }
 
+//    @Bean
+//    @StepScope
+//    fun systemFailureItemReader(
+//        @Value("#{jobParameters['inputFile']}") inputFile: String,
+//    ): FlatFileItemReader<SystemFailure> {
+//        return FlatFileItemReaderBuilder<SystemFailure>()
+//            .name("systemFailureItemReader")
+//            .resource(ClassPathResource(inputFile))
+//            .fixedLength()
+//            .columns(
+//                Range(1, 8),  // errorId: ERR001 + 공백 2칸
+//                Range(9, 29),  // errorDateTime: 날짜시간 + 공백 2칸
+//                Range(30, 39),  // severity: CRITICAL/FATAL + 패딩
+//                Range(40, 45),  // processId: 1234 + 공백 2칸
+//                Range(46, 66) // errorMessage: 메시지 + \n
+//            )
+//            .names("errorId", "errorDateTime", "severity", "processId", "errorMessage")
+//            .targetType(SystemFailure::class.java)
+//            .build()
+//    }
+
     @Bean
     fun systemFailureStdoutItemWriter(): SystemFailureStdoutItemWriter {
         return SystemFailureStdoutItemWriter()
