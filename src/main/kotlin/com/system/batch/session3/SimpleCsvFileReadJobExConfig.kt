@@ -14,7 +14,7 @@ import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.core.io.FileSystemResource
+import org.springframework.core.io.ClassPathResource
 import org.springframework.transaction.PlatformTransactionManager
 
 
@@ -51,7 +51,7 @@ class SimpleCsvFileReadJobExConfig(
     ): FlatFileItemReader<SystemFailure> {
         return FlatFileItemReaderBuilder<SystemFailure>()
             .name("systemFailureItemReader")
-            .resource(FileSystemResource(inputFile))
+            .resource(ClassPathResource(inputFile))
             .delimited()
             .delimiter(",")
             .names(
@@ -82,10 +82,10 @@ class SimpleCsvFileReadJobExConfig(
 }
 
 data class SystemFailure(
-    val errorId: String,
-    val errorDateTime: String,
-    val severity: String,
-    val processId: Int,
-    val errorMessage: String,
+    var errorId: String = "",
+    var errorDateTime: String = "",
+    var severity: String = "",
+    var processId: Int = 0,
+    var errorMessage: String = "",
 )
 
