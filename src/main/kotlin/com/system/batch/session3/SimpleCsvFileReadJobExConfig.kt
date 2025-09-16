@@ -16,6 +16,10 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.io.ClassPathResource
 import org.springframework.transaction.PlatformTransactionManager
+import java.beans.PropertyEditor
+import java.beans.PropertyEditorSupport
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 
 private val logger = KotlinLogging.logger {}
@@ -63,6 +67,7 @@ class SimpleCsvFileReadJobExConfig(
             )
             .targetType(SystemFailure::class.java)
             .linesToSkip(1)
+            .customEditors(mapOf(LocalDateTime::class.java to dateTimeEditor()))
             .build()
     }
 
@@ -100,11 +105,20 @@ class SimpleCsvFileReadJobExConfig(
             }
         }
     }
+
+    private fun dateTimeEditor(): PropertyEditor {
+        return object : PropertyEditorSupport() {
+            override fun setAsText(text: String) {
+                val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+                setValue(LocalDateTime.parse(text, formatter))
+            }
+        }
+    }
 }
 
 data class SystemFailure(
     var errorId: String = "",
-    var errorDateTime: String = "",
+    var errorDateTime: LocalDateTime? = null,
     var severity: String = "",
     var processId: Int = 0,
     var errorMessage: String = "",
