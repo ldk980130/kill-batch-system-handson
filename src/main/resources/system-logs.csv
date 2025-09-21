@@ -1,0 +1,3 @@
+[WARNING][Thread-156][CPU: 78%] Thread pool saturation detected - 45/50 threads in use...
+[ERROR][Thread-157][CPU: 92%] Thread deadlock detected between Thread-157 and Thread-159
+[FATAL][Thread-159][CPU: 95%] Thread dump initiated - system unresponsive for 30s
