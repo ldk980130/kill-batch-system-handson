@@ -20,6 +20,9 @@ class MultiResourceItemReaderConfig(
     private val jobRepository: JobRepository,
     private val transactionManager: PlatformTransactionManager,
 ) {
+    /**
+     *  ./gradlew bootRun --args='--spring.batch.job.name=deathNoteWriteJob outputDir=/Users/does/IdeaProjects/kill-batch-system-handson'
+     */
     @Bean
     fun systemFailureMultiStep(
         multiSystemFailureItemReader: MultiResourceItemReader<SystemFailure>,
