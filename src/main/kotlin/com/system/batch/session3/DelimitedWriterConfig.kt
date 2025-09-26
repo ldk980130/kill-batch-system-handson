@@ -19,6 +19,7 @@ import java.io.Writer
 @Configuration
 class DelimitedWriterConfig(
     private val jobRepository: JobRepository,
+    private val transactionManager: PlatformTransactionManager,
 ) {
     @Bean
     fun deathNoteWriteJob(deathNoteWriteStep: Step): Job =
@@ -28,8 +29,6 @@ class DelimitedWriterConfig(
 
     @Bean
     fun deathNoteWriteStep(
-        jobRepository: JobRepository,
-        transactionManager: PlatformTransactionManager,
         deathNoteListReader: ListItemReader<DeathNote>,
         deathNoteWriter: FlatFileItemWriter<DeathNote>,
     ): Step =
