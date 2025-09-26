@@ -21,11 +21,11 @@ class MultiResourceItemReaderConfig(
     private val transactionManager: PlatformTransactionManager,
 ) {
     @Bean
-    fun systemFailureStep(
+    fun systemFailureMultiStep(
         multiSystemFailureItemReader: MultiResourceItemReader<SystemFailure>,
         systemFailureStdoutItemWriter: SystemFailureStdoutItemWriter,
     ): Step =
-        StepBuilder("systemFailureStep", jobRepository)
+        StepBuilder("systemFailureMultiStep", jobRepository)
             .chunk<SystemFailure, SystemFailure>(10, transactionManager)
             .reader(multiSystemFailureItemReader)
             .writer(systemFailureStdoutItemWriter)
