@@ -8,6 +8,8 @@ import org.springframework.batch.core.repository.JobRepository
 import org.springframework.batch.core.step.builder.StepBuilder
 import org.springframework.batch.item.file.FlatFileItemWriter
 import org.springframework.batch.item.file.builder.FlatFileItemWriterBuilder
+import org.springframework.batch.item.file.transform.FieldExtractor
+import org.springframework.batch.item.file.transform.RecordFieldExtractor
 import org.springframework.batch.item.support.ListItemReader
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -71,10 +73,15 @@ class DelimitedWriterConfig(
             .resource(FileSystemResource("$outputDir/death_notes.csv"))
             .delimited()
             .delimiter(",")
-            .sourceType(DeathNote::class.java)
-            .names("victimId", "victimName", "executionDate", "causeOfDeath")
+//            .sourceType(DeathNote::class.java)
+//            .names("victimId", "victimName", "executionDate", "causeOfDeath")
+            .fieldExtractor(fieldExtractor())
             .headerCallback { writer: Writer -> writer.write("처형ID,피해자명,처형일자,사인") }
             .build()
+
+    fun fieldExtractor(): FieldExtractor<DeathNote> =
+        RecordFieldExtractor(DeathNote::class.java)
+            .apply { setNames("victimId", "executionDate", "causeOfDeath") }
 }
 
 data class DeathNote(
