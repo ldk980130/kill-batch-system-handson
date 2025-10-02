@@ -6,6 +6,8 @@ import org.springframework.batch.core.configuration.annotation.StepScope
 import org.springframework.batch.core.job.builder.JobBuilder
 import org.springframework.batch.core.repository.JobRepository
 import org.springframework.batch.core.step.builder.StepBuilder
+import org.springframework.batch.item.file.FlatFileFooterCallback
+import org.springframework.batch.item.file.FlatFileHeaderCallback
 import org.springframework.batch.item.file.FlatFileItemWriter
 import org.springframework.batch.item.file.builder.FlatFileItemWriterBuilder
 import org.springframework.batch.item.file.transform.FieldExtractor
@@ -32,12 +34,12 @@ class DelimitedWriterConfig(
     @Bean
     fun deathNoteWriteStep(
         deathNoteListReader: ListItemReader<DeathNote>,
-        deathNoteWriter: FlatFileItemWriter<DeathNote>,
+        deathNoteFormatterLineWriter: FlatFileItemWriter<DeathNote>,
     ): Step =
         StepBuilder("deathNoteWriteStep", jobRepository)
             .chunk<DeathNote, DeathNote>(10, transactionManager)
             .reader(deathNoteListReader)
-            .writer(deathNoteWriter)
+            .writer(deathNoteFormatterLineWriter)
             .build()
 
     @Bean
@@ -65,7 +67,7 @@ class DelimitedWriterConfig(
 
     @Bean
     @StepScope
-    fun deathNoteWriter(
+    fun deathNoteDelimiterWriter(
         @Value("#{jobParameters['outputDir']}") outputDir: String,
     ): FlatFileItemWriter<DeathNote> =
         FlatFileItemWriterBuilder<DeathNote>()
@@ -73,8 +75,21 @@ class DelimitedWriterConfig(
             .resource(FileSystemResource("$outputDir/death_notes.csv"))
             .delimited()
             .delimiter(",")
-//            .sourceType(DeathNote::class.java)
-//            .names("victimId", "victimName", "executionDate", "causeOfDeath")
+            .sourceType(DeathNote::class.java)
+            .names("victimId", "victimName", "executionDate", "causeOfDeath")
+            .headerCallback { writer: Writer -> writer.write("처형ID,피해자명,처형일자,사인") }
+            .build()
+
+    @Bean
+    @StepScope
+    fun deathNoteCustomExtractorWriter(
+        @Value("#{jobParameters['outputDir']}") outputDir: String,
+    ): FlatFileItemWriter<DeathNote> =
+        FlatFileItemWriterBuilder<DeathNote>()
+            .name("deathNoteWriter")
+            .resource(FileSystemResource("$outputDir/death_notes.csv"))
+            .delimited()
+            .delimiter(",")
             .fieldExtractor(fieldExtractor())
             .headerCallback { writer: Writer -> writer.write("처형ID,피해자명,처형일자,사인") }
             .build()
@@ -82,6 +97,22 @@ class DelimitedWriterConfig(
     fun fieldExtractor(): FieldExtractor<DeathNote> =
         RecordFieldExtractor(DeathNote::class.java)
             .apply { setNames("victimId", "executionDate", "causeOfDeath") }
+
+    @Bean
+    @StepScope
+    fun deathNoteFormatterLineWriter(
+        @Value("#{jobParameters['outputDir']}") outputDir: String?,
+    ): FlatFileItemWriter<DeathNote> =
+        FlatFileItemWriterBuilder<DeathNote>()
+            .name("deathNoteWriter")
+            .resource(FileSystemResource("$outputDir/death_note_report.txt"))
+            .formatted()
+            .format("처형 ID: %s | 처형일자: %s | 피해자: %s | 사인: %s")
+            .sourceType(DeathNote::class.java)
+            .names("victimId", "executionDate", "victimName", "causeOfDeath")
+            .headerCallback { writer: Writer -> writer!!.write("================= 처형 기록부 =================") }
+            .footerCallback { writer: Writer -> writer!!.write("================= 처형 완료 ==================") }
+            .build()
 }
 
 data class DeathNote(
