@@ -110,8 +110,8 @@ class DelimitedWriterConfig(
             .format("처형 ID: %s | 처형일자: %s | 피해자: %s | 사인: %s")
             .sourceType(DeathNote::class.java)
             .names("victimId", "executionDate", "victimName", "causeOfDeath")
-            .headerCallback { writer: Writer -> writer!!.write("================= 처형 기록부 =================") }
-            .footerCallback { writer: Writer -> writer!!.write("================= 처형 완료 ==================") }
+            .headerCallback { writer: Writer -> writer.write("================= 처형 기록부 =================") }
+            .footerCallback { writer: Writer -> writer.write("================= 처형 완료 ==================") }
             .build()
 }
 
