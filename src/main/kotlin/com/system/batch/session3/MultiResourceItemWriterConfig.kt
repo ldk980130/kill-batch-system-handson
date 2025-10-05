@@ -70,7 +70,7 @@ class MultiResourceItemWriterConfig(
             .resource(FileSystemResource("$outputDir/death_note"))
             .itemCountLimitPerResource(10)
             .delegate(delegateItemWriter())
-            .resourceSuffixCreator(ResourceSuffixCreator { index: Int -> String.format("_%03d.txt", index) })
+            .resourceSuffixCreator { index: Int -> String.format("_%03d.txt", index) }
             .build()
     }
 
