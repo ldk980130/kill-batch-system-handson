@@ -10,8 +10,9 @@ import org.springframework.batch.core.step.builder.StepBuilder
 import org.springframework.batch.item.Chunk
 import org.springframework.batch.item.ItemWriter
 import org.springframework.batch.item.file.FlatFileItemReader
-import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder
-import org.springframework.batch.item.file.separator.JsonRecordSeparatorPolicy
+import org.springframework.batch.item.json.JacksonJsonObjectReader
+import org.springframework.batch.item.json.JsonItemReader
+import org.springframework.batch.item.json.builder.JsonItemReaderBuilder
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -34,7 +35,7 @@ class JsonJobConfig(
 
     @Bean
     fun systemDeathStep(
-        systemDeathReader: FlatFileItemReader<SystemDeath>,
+        systemDeathReader: JsonItemReader<SystemDeath>,
     ): Step {
         return StepBuilder("systemDeathStep", jobRepository)
             .chunk<SystemDeath, SystemDeath>(10, transactionManager)
@@ -46,21 +47,33 @@ class JsonJobConfig(
     @Bean
     @StepScope
     fun systemDeathReader(
-        @Value("#{jobParameters['inputFile']}") inputFile: String,
-    ): FlatFileItemReader<SystemDeath> {
-        return FlatFileItemReaderBuilder<SystemDeath>()
+        @Value("#{jobParameters['inputFile']}") inputFile: String, objectMapper: ObjectMapper,
+    ): JsonItemReader<SystemDeath> {
+        return JsonItemReaderBuilder<SystemDeath>()
             .name("systemDeathReader")
+            .jsonObjectReader(JacksonJsonObjectReader(objectMapper, SystemDeath::class.java))
             .resource(ClassPathResource(inputFile))
-            .lineMapper { line: String, _: Int ->
-                objectMapper.readValue(line, SystemDeath::class.java)
-            }
-            .recordSeparatorPolicy(JsonRecordSeparatorPolicy())
             .build()
     }
+
+//    @Bean
+//    @StepScope
+//    fun systemDeathReader(
+//        @Value("#{jobParameters['inputFile']}") inputFile: String,
+//    ): FlatFileItemReader<SystemDeath> {
+//        return FlatFileItemReaderBuilder<SystemDeath>()
+//            .name("systemDeathReader")
+//            .resource(ClassPathResource(inputFile))
+//            .lineMapper { line: String, _: Int ->
+//                objectMapper.readValue(line, SystemDeath::class.java)
+//            }
+//            .recordSeparatorPolicy(JsonRecordSeparatorPolicy())
+//            .build()
+//    }
 }
 
 data class SystemDeath(
-    val command: String,
-    val cpu: Int,
-    val status: String,
+    var command: String,
+    var cpu: Int,
+    var status: String,
 )
