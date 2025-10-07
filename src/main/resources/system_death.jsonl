@@ -1,0 +1,15 @@
+{
+  "command": "destroy",
+  "cpu": 99,
+  "status": "memory overflow"
+}
+{
+  "command": "explode",
+  "cpu": 100,
+  "status": "cpu meltdown"
+}
+{
+  "command": "collapse",
+  "cpu": 95,
+  "status": "disk burnout"
+}
