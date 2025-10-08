@@ -7,54 +7,52 @@ import org.springframework.batch.core.configuration.annotation.StepScope
 import org.springframework.batch.core.job.builder.JobBuilder
 import org.springframework.batch.core.repository.JobRepository
 import org.springframework.batch.core.step.builder.StepBuilder
-import org.springframework.batch.item.Chunk
-import org.springframework.batch.item.ItemWriter
-import org.springframework.batch.item.file.FlatFileItemReader
+import org.springframework.batch.item.json.JacksonJsonObjectMarshaller
 import org.springframework.batch.item.json.JacksonJsonObjectReader
+import org.springframework.batch.item.json.JsonFileItemWriter
 import org.springframework.batch.item.json.JsonItemReader
+import org.springframework.batch.item.json.builder.JsonFileItemWriterBuilder
 import org.springframework.batch.item.json.builder.JsonItemReaderBuilder
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.io.ClassPathResource
+import org.springframework.core.io.FileSystemResource
 import org.springframework.transaction.PlatformTransactionManager
-
 
 @Configuration
 class JsonJobConfig(
     private val jobRepository: JobRepository,
     private val transactionManager: PlatformTransactionManager,
-    private val objectMapper: ObjectMapper,
 ) {
     @Bean
-    fun systemDeathJob(systemDeathStep: Step): Job {
-        return JobBuilder("systemDeathJob", jobRepository)
+    fun systemDeathJob(systemDeathStep: Step): Job =
+        JobBuilder("systemDeathJob", jobRepository)
             .start(systemDeathStep)
             .build()
-    }
 
     @Bean
     fun systemDeathStep(
         systemDeathReader: JsonItemReader<SystemDeath>,
-    ): Step {
-        return StepBuilder("systemDeathStep", jobRepository)
+        systemDeathJsonWriter: JsonFileItemWriter<SystemDeath>,
+    ): Step =
+        StepBuilder("systemDeathStep", jobRepository)
             .chunk<SystemDeath, SystemDeath>(10, transactionManager)
             .reader(systemDeathReader)
-            .writer(ItemWriter { items: Chunk<out SystemDeath> -> items.forEach { x -> println(x) } })
+            .writer(systemDeathJsonWriter)
             .build()
-    }
 
     @Bean
     @StepScope
     fun systemDeathReader(
-        @Value("#{jobParameters['inputFile']}") inputFile: String, objectMapper: ObjectMapper,
-    ): JsonItemReader<SystemDeath> {
-        return JsonItemReaderBuilder<SystemDeath>()
+        @Value("#{jobParameters['inputFile']}") inputFile: String,
+        objectMapper: ObjectMapper,
+    ): JsonItemReader<SystemDeath> =
+        JsonItemReaderBuilder<SystemDeath>()
             .name("systemDeathReader")
             .jsonObjectReader(JacksonJsonObjectReader(objectMapper, SystemDeath::class.java))
             .resource(ClassPathResource(inputFile))
             .build()
-    }
 
 //    @Bean
 //    @StepScope
@@ -70,6 +68,17 @@ class JsonJobConfig(
 //            .recordSeparatorPolicy(JsonRecordSeparatorPolicy())
 //            .build()
 //    }
+
+    @Bean
+    @StepScope
+    fun systemDeathJsonWriter(
+        @Value("#{jobParameters['outputDir']}") outputDir: String,
+    ): JsonFileItemWriter<SystemDeath> =
+        JsonFileItemWriterBuilder<SystemDeath>()
+            .name("logEntryJsonWriter")
+            .jsonObjectMarshaller(JacksonJsonObjectMarshaller())
+            .resource(FileSystemResource("$outputDir/death_notes.json"))
+            .build()
 }
 
 data class SystemDeath(
