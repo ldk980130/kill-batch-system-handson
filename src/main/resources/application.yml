@@ -11,6 +11,12 @@ spring:
     driver-class-name: org.postgresql.Driver
     username: root
     password: password
+  jpa:
+    show-sql: true        # SQL 실행문을 눈앞에서 처형한다
+    properties:
+      hibernate:
+        format_sql: true    # SQL을 보기 좋게 줄바꿈해서 출력한다
+        highlight_sql: true # SQL을 형형색색으로 치장한다
 
 # docker run --name postgres-batch \
 #    -e POSTGRES_USER=root \
