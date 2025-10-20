@@ -17,6 +17,7 @@ import org.springframework.batch.item.ItemProcessor
 import org.springframework.batch.item.ItemWriter
 import org.springframework.batch.item.database.JpaCursorItemReader
 import org.springframework.batch.item.database.builder.JpaCursorItemReaderBuilder
+import org.springframework.batch.item.database.orm.JpaNamedQueryProvider
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -24,7 +25,6 @@ import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Component
 import org.springframework.transaction.PlatformTransactionManager
 import java.time.LocalDateTime
-
 
 @Configuration
 class JpaCursorPostBlockBatchConfig(
@@ -36,25 +36,23 @@ class JpaCursorPostBlockBatchConfig(
     private val log: KLogger = KotlinLogging.logger {}
 
     @Bean
-    fun postBlockBatchJob(postBlockStep: Step): Job {
-        return JobBuilder("postBlockBatchJob", jobRepository)
+    fun postBlockBatchJob(postBlockStep: Step): Job =
+        JobBuilder("postBlockBatchJob", jobRepository)
             .start(postBlockStep)
             .build()
-    }
 
     @Bean
     fun postBlockStep(
         postBlockReader: JpaCursorItemReader<Post>,
         postBlockProcessor: PostBlockProcessor,
         postBlockWriter: ItemWriter<BlockedPost?>,
-    ): Step? {
-        return StepBuilder("postBlockStep", jobRepository)
+    ): Step? =
+        StepBuilder("postBlockStep", jobRepository)
             .chunk<Post, BlockedPost>(5, transactionManager)
             .reader(postBlockReader)
             .processor(postBlockProcessor)
             .writer(postBlockWriter)
             .build()
-    }
 
     @Bean
     @StepScope
@@ -68,29 +66,34 @@ class JpaCursorPostBlockBatchConfig(
         return JpaCursorItemReaderBuilder<Post>()
             .name("postBlockReader")
             .entityManagerFactory(entityManagerFactory)
-            .queryString(
-                """
-                SELECT p FROM Post p JOIN FETCH p.reports r
-                WHERE r.reportedAt >= :startDateTime AND r.reportedAt < :endDateTime
-            """.trimIndent()
-            )
+//            .queryString(
+//                """
+//                SELECT p FROM Post p JOIN FETCH p.reports r
+//                WHERE r.reportedAt >= :startDateTime AND r.reportedAt < :endDateTime
+//                """.trimIndent(),
+            .queryProvider(createQueryProvider())
             .parameterValues(
                 mapOf(
                     "startDateTime" to startDateTime,
-                    "endDateTime" to endDateTime
-                )
-            )
-            .build()
+                    "endDateTime" to endDateTime,
+                ),
+            ).build()
+    }
+
+    private fun createQueryProvider(): JpaNamedQueryProvider<Post> {
+        val queryProvider = JpaNamedQueryProvider<Post>()
+        queryProvider.setEntityClass(Post::class.java)
+        queryProvider.setNamedQuery("Post.findByReportsReportedAtBetween")
+        return queryProvider
     }
 
     @Bean
-    fun postBlockWriter(): ItemWriter<BlockedPost> {
-        return ItemWriter { items: Chunk<out BlockedPost> ->
+    fun postBlockWriter(): ItemWriter<BlockedPost> =
+        ItemWriter { items: Chunk<out BlockedPost> ->
             items.forEach {
                 log.info { "💀 TERMINATED: $it" }
             }
         }
-    }
 
     @PostConstruct
     fun init() {
