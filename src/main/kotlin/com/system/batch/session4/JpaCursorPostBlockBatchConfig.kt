@@ -15,8 +15,8 @@ import org.springframework.batch.core.step.builder.StepBuilder
 import org.springframework.batch.item.Chunk
 import org.springframework.batch.item.ItemProcessor
 import org.springframework.batch.item.ItemWriter
-import org.springframework.batch.item.database.JpaCursorItemReader
-import org.springframework.batch.item.database.builder.JpaCursorItemReaderBuilder
+import org.springframework.batch.item.database.JpaPagingItemReader
+import org.springframework.batch.item.database.builder.JpaPagingItemReaderBuilder
 import org.springframework.batch.item.database.orm.JpaNamedQueryProvider
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -43,7 +43,7 @@ class JpaCursorPostBlockBatchConfig(
 
     @Bean
     fun postBlockStep(
-        postBlockReader: JpaCursorItemReader<Post>,
+        postBlockReader: JpaPagingItemReader<Post>,
         postBlockProcessor: PostBlockProcessor,
         postBlockWriter: ItemWriter<BlockedPost?>,
     ): Step? =
@@ -54,38 +54,62 @@ class JpaCursorPostBlockBatchConfig(
             .writer(postBlockWriter)
             .build()
 
+//    @Bean
+//    @StepScope
+//    fun postBlockReader(
+//        @Value("#{jobParameters['startDateTime']}") startDateTimeStr: String,
+//        @Value("#{jobParameters['endDateTime']}") endDateTimeStr: String,
+//    ): JpaCursorItemReader<Post> {
+//        val startDateTime = LocalDateTime.parse(startDateTimeStr)
+//        val endDateTime = LocalDateTime.parse(endDateTimeStr)
+//
+//        return JpaCursorItemReaderBuilder<Post>()
+//            .name("postBlockReader")
+//            .entityManagerFactory(entityManagerFactory)
+// //            .queryString(
+// //                """
+// //                SELECT p FROM Post p JOIN FETCH p.reports r
+// //                WHERE r.reportedAt >= :startDateTime AND r.reportedAt < :endDateTime
+// //                """.trimIndent(),
+//            .queryProvider(createQueryProvider())
+//            .parameterValues(
+//                mapOf(
+//                    "startDateTime" to startDateTime,
+//                    "endDateTime" to endDateTime,
+//                ),
+//            ).build()
+//    }
+//
+//    private fun createQueryProvider(): JpaNamedQueryProvider<Post> {
+//        val queryProvider = JpaNamedQueryProvider<Post>()
+//        queryProvider.setEntityClass(Post::class.java)
+//        queryProvider.setNamedQuery("Post.findByReportsReportedAtBetween")
+//        return queryProvider
+//    }
+
     @Bean
     @StepScope
     fun postBlockReader(
-        @Value("#{jobParameters['startDateTime']}") startDateTimeStr: String,
-        @Value("#{jobParameters['endDateTime']}") endDateTimeStr: String,
-    ): JpaCursorItemReader<Post> {
-        val startDateTime = LocalDateTime.parse(startDateTimeStr)
-        val endDateTime = LocalDateTime.parse(endDateTimeStr)
-
-        return JpaCursorItemReaderBuilder<Post>()
+        @Value("#{jobParameters['startDateTime']}") startDateTime: LocalDateTime,
+        @Value("#{jobParameters['endDateTime']}") endDateTime: LocalDateTime,
+    ): JpaPagingItemReader<Post> =
+        JpaPagingItemReaderBuilder<Post>()
             .name("postBlockReader")
             .entityManagerFactory(entityManagerFactory)
-//            .queryString(
-//                """
-//                SELECT p FROM Post p JOIN FETCH p.reports r
-//                WHERE r.reportedAt >= :startDateTime AND r.reportedAt < :endDateTime
-//                """.trimIndent(),
-            .queryProvider(createQueryProvider())
-            .parameterValues(
+            .queryString(
+                """
+                SELECT DISTINCT p FROM Post p 
+                JOIN p.reports r
+                WHERE r.reportedAt >= :startDateTime AND r.reportedAt < :endDateTime
+                ORDER BY p.id ASC
+                """.trimIndent(),
+            ).parameterValues(
                 mapOf(
                     "startDateTime" to startDateTime,
                     "endDateTime" to endDateTime,
                 ),
-            ).build()
-    }
-
-    private fun createQueryProvider(): JpaNamedQueryProvider<Post> {
-        val queryProvider = JpaNamedQueryProvider<Post>()
-        queryProvider.setEntityClass(Post::class.java)
-        queryProvider.setNamedQuery("Post.findByReportsReportedAtBetween")
-        return queryProvider
-    }
+            ).pageSize(5)
+            .build()
 
     @Bean
     fun postBlockWriter(): ItemWriter<BlockedPost> =
