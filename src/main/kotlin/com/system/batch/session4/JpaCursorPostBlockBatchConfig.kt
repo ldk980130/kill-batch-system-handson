@@ -1,5 +1,6 @@
 package com.system.batch.session4
 
+import com.system.batch.session4.entity.BlockedPost
 import com.system.batch.session4.entity.Post
 import com.system.batch.session4.entity.Report
 import io.github.oshai.kotlinlogging.KLogger
@@ -12,12 +13,12 @@ import org.springframework.batch.core.configuration.annotation.StepScope
 import org.springframework.batch.core.job.builder.JobBuilder
 import org.springframework.batch.core.repository.JobRepository
 import org.springframework.batch.core.step.builder.StepBuilder
-import org.springframework.batch.item.Chunk
 import org.springframework.batch.item.ItemProcessor
 import org.springframework.batch.item.ItemWriter
+import org.springframework.batch.item.database.JpaItemWriter
 import org.springframework.batch.item.database.JpaPagingItemReader
+import org.springframework.batch.item.database.builder.JpaItemWriterBuilder
 import org.springframework.batch.item.database.builder.JpaPagingItemReaderBuilder
-import org.springframework.batch.item.database.orm.JpaNamedQueryProvider
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -25,6 +26,7 @@ import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Component
 import org.springframework.transaction.PlatformTransactionManager
 import java.time.LocalDateTime
+
 
 @Configuration
 class JpaCursorPostBlockBatchConfig(
@@ -112,12 +114,12 @@ class JpaCursorPostBlockBatchConfig(
             .build()
 
     @Bean
-    fun postBlockWriter(): ItemWriter<BlockedPost> =
-        ItemWriter { items: Chunk<out BlockedPost> ->
-            items.forEach {
-                log.info { "💀 TERMINATED: $it" }
-            }
-        }
+    fun postBlockWriter(): JpaItemWriter<BlockedPost> {
+        return JpaItemWriterBuilder<BlockedPost>()
+            .entityManagerFactory(entityManagerFactory)
+            .usePersist(true)
+            .build()
+    }
 
     @PostConstruct
     fun init() {
@@ -135,6 +137,20 @@ class JpaCursorPostBlockBatchConfig(
 
         jdbcTemplate.execute(createPostsTableSql)
         log.info { "Posts table checked/created successfully" }
+
+        val createBlockedPostTabeSql = """
+            CREATE TABLE IF NOT EXISTS blocked_posts ( 
+            	post_id BIGINT PRIMARY KEY, 
+            	writer VARCHAR(255) NOT NULL,
+              title VARCHAR(255) NOT NULL, 
+              report_count INTEGER NOT NULL,
+              block_score DOUBLE PRECISION NOT NULL, 
+              blocked_at TIMESTAMP NOT NULL 
+            );
+        """.trimIndent()
+
+        jdbcTemplate.execute(createBlockedPostTabeSql)
+        log.info { "Blocked posts table checked/created successfully" }
 
         // reports 테이블 생성
         val createReportsTableSql =
@@ -254,15 +270,6 @@ class JpaCursorPostBlockBatchConfig(
         }
     }
 }
-
-data class BlockedPost(
-    val postId: Long,
-    val writer: String,
-    val title: String,
-    val reportCount: Int = 0,
-    val blockScore: Double = 0.0,
-    val blockedAt: LocalDateTime,
-)
 
 @Component
 class PostBlockProcessor : ItemProcessor<Post, BlockedPost> {
