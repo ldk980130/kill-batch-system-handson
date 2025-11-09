@@ -4,9 +4,18 @@ import com.fasterxml.jackson.annotation.JsonValue
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import org.springframework.batch.core.repository.JobRepository
+import org.springframework.context.annotation.Configuration
+import org.springframework.data.redis.connection.RedisConnectionFactory
+import org.springframework.transaction.PlatformTransactionManager
 import java.time.LocalDateTime
 
-class RedisReaderWriterConfig
+@Configuration
+class HackerAttackAggregationJob(
+    private val transactionManager: PlatformTransactionManager,
+    private val jobRepository: JobRepository,
+    private val redisConnectionFactory: RedisConnectionFactory,
+)
 
 // 공격 로그 데이터 모델
 data class AttackLog(
