@@ -8,8 +8,11 @@ import org.springframework.batch.core.Step
 import org.springframework.batch.core.job.builder.JobBuilder
 import org.springframework.batch.core.repository.JobRepository
 import org.springframework.batch.core.step.builder.StepBuilder
+import org.springframework.batch.item.ItemProcessor
 import org.springframework.batch.item.redis.RedisItemReader
+import org.springframework.batch.item.redis.RedisItemWriter
 import org.springframework.batch.item.redis.builder.RedisItemReaderBuilder
+import org.springframework.batch.item.redis.builder.RedisItemWriterBuilder
 import org.springframework.batch.repeat.RepeatStatus
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -57,7 +60,7 @@ class HackerAttackAggregationJob(
     @Bean
     fun aggregateAttackStep(
         attackLogReader: RedisItemReader<String, AttackLog>,
-        attackCounterItemWriter: AttackCounterItemWriter,
+        attackCounterItemWriter: RedisItemWriter<String, AttackLog>,
     ): Step =
         StepBuilder("aggregateAttackStep", jobRepository)
             .chunk<AttackLog, AttackLog>(10, transactionManager)
@@ -88,4 +91,12 @@ class HackerAttackAggregationJob(
                     .count(10)
                     .build(),
             ).build()
+
+    @Bean
+    fun deleteAttackLogWriter(): RedisItemWriter<String, AttackLog> =
+        RedisItemWriterBuilder<String, AttackLog>()
+            .redisTemplate(redisTemplate)
+            .itemKeyMapper { attackLog: AttackLog -> "attack:" + attackLog.id }
+            .delete(true)
+            .build()
 }
